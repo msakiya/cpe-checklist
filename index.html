@@ -68,7 +68,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-full font-sans antialiased flex flex-col selection:bg-brand-500 selection:text-white">
 
-    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         <!-- Hero Status Banner -->
         <div id="heroCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/50 border border-slate-800 p-6 md:p-8 glow-effect">
@@ -131,8 +131,8 @@
             </div>
         </div>
 
-        <!-- Task List Grid -->
-        <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Task List - Configurado para 1 Sola Columna en Escritorio y Mobile -->
+        <div id="tasksList" class="grid grid-cols-1 gap-4">
             <!-- Dynamic task items rendered via JS -->
         </div>
 
@@ -249,11 +249,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Configuración de tu servidor MySQL en compraloya.online
-$host = 'localhost'; // Cambia si tu servidor MySQL usa otra IP/Host
-$db   = 'ecom_checklist'; // Tu nombre de base de datos
-$user = 'TU_USUARIO_MYSQL'; // Tu usuario de MySQL en cPanel/Hostinger
-$pass = 'TU_CONTRASEÑA_MYSQL'; // Tu contraseña de MySQL
+// Configuración de tu servidor MySQL
+$host = 'localhost'; 
+$db   = 'ecom_checklist'; 
+$user = 'TU_USUARIO_MYSQL'; 
+$pass = 'TU_CONTRASEÑA_MYSQL'; 
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -343,7 +343,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Exact 12 Steps requested by the user
         const DEFAULT_TASKS = [
             {
                 id: "task-1",
@@ -459,11 +458,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         let currentFilter = 'all';
         let customApiUrl = localStorage.getItem('ecom_mysql_api_url_v2') || 'checklist.php';
 
-        // Initialize state object
         DEFAULT_TASKS.forEach(t => tasksState[t.id] = false);
 
         function loadState() {
-            // Load local storage first
             const savedLocal = localStorage.getItem('ecom_checklist_state');
             if (savedLocal) {
                 try {
@@ -471,14 +468,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } catch(e){}
             }
 
-            // If MySQL API is configured, try fetching remote
             if (customApiUrl) {
                 updateMysqlBadge("Conectando MySQL...", "text-amber-400");
                 fetch(customApiUrl, { method: 'GET' })
                     .then(res => {
-                        if (!res.ok) {
-                            throw new Error(`HTTP Error ${res.status}`);
-                        }
+                        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
                         return res.json();
                     })
                     .then(data => {
@@ -506,7 +500,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function saveState() {
             saveToLocalStorage();
 
-            // Sync with MySQL backend if URL is provided
             if (customApiUrl) {
                 updateMysqlBadge("Guardando...", "text-amber-400");
                 fetch(customApiUrl, {
@@ -560,7 +553,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (filteredTasks.length === 0) {
                 tasksList.innerHTML = `
-                    <div class="col-span-1 md:col-span-2 py-12 text-center bg-slate-900/40 rounded-2xl border border-slate-800/80">
+                    <div class="py-12 text-center bg-slate-900/40 rounded-2xl border border-slate-800/80">
                         <i class="fa-solid fa-clipboard-check text-4xl text-slate-600 mb-3"></i>
                         <p class="text-slate-400 text-sm font-medium">No hay tareas en esta categoría.</p>
                     </div>
@@ -570,6 +563,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             filteredTasks.forEach(task => {
                 const isChecked = !!tasksState[task.id];
+                // Obtener número correlativo de la tarea
+                const stepIndex = DEFAULT_TASKS.findIndex(t => t.id === task.id) + 1;
 
                 const card = document.createElement('div');
                 card.className = `group relative rounded-2xl p-5 border transition-all duration-300 flex flex-col justify-between ${
@@ -600,7 +595,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 >
                             </div>
                             <label for="${task.id}" class="cursor-pointer text-base font-bold text-slate-100 group-hover:text-brand-300 transition-colors">
-                                ${task.title}
+                                <span class="text-cyan-400 font-extrabold mr-1.5">${stepIndex}.</span>${task.title}
                             </label>
                         </div>
 
@@ -610,7 +605,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
-                        <span>Paso ${DEFAULT_TASKS.findIndex(t => t.id === task.id) + 1} de 12</span>
+                        <span>Paso ${stepIndex} de 12</span>
                         <button class="toggle-task-btn text-brand-400 font-semibold hover:underline" data-id="${task.id}">
                             ${isChecked ? 'Desmarcar' : 'Marcar completado'}
                         </button>
@@ -648,13 +643,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const totalCount = DEFAULT_TASKS.length;
             const percentage = Math.round((completedCount / totalCount) * 100);
 
-            // Update Counts and percentage text
             document.getElementById('completedCount').textContent = completedCount;
             document.getElementById('pendingCount').textContent = totalCount - completedCount;
             document.getElementById('progressPercentageText').textContent = `${percentage}%`;
             document.getElementById('mainProgressBar').style.width = `${percentage}%`;
 
-            // Update Hero Banner content based on total progress percentage
             const statusTitle = document.getElementById('statusTitle');
 
             if (percentage === 0) {
@@ -723,7 +716,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Filtering logic setup
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.filter-btn').forEach(b => {
@@ -739,7 +731,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         });
 
-        // MySQL Modal Toggle & Config handlers
         const mysqlModal = document.getElementById('mysqlModal');
         const mysqlConfigBtn = document.getElementById('mysqlConfigBtn');
         const shareLinkBtn = document.getElementById('shareLinkBtn');
@@ -757,7 +748,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         closeMysqlModal?.addEventListener('click', closeModal);
         closeMysqlModalFooter?.addEventListener('click', closeModal);
 
-        // Tab Switching inside Modal
         function switchTab(btnId, tabId) {
             document.querySelectorAll('.modal-tab').forEach(b => {
                 b.classList.remove('text-cyan-400', 'border-cyan-400', 'active');
@@ -777,7 +767,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('tabSqlBtn')?.addEventListener('click', () => switchTab('tabSqlBtn', 'tabSql'));
         document.getElementById('tabPhpBtn')?.addEventListener('click', () => switchTab('tabPhpBtn', 'tabPhp'));
 
-        // API Endpoint saving
         const apiUrlInput = document.getElementById('apiUrlInput');
         if (apiUrlInput) apiUrlInput.value = customApiUrl;
 
@@ -800,7 +789,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             closeModal();
         });
 
-        // Reset Flow with Modal
         const resetModal = document.getElementById('resetModal');
         document.getElementById('resetBtn')?.addEventListener('click', () => {
             resetModal?.classList.remove('hidden');
@@ -818,7 +806,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             showToast("El checklist ha sido reiniciado.", "info");
         });
 
-        // Initialize App on Load
         window.addEventListener('DOMContentLoaded', () => {
             loadState();
         });
