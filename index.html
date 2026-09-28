@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist de Lanzamiento e-Commerce (MySQL)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        mysql: {
+                            500: '#00758F',
+                            600: '#005f73',
+                            700: '#004857'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glow-effect {
+            box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.3);
+        }
+        .glow-success {
+            box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.4);
+        }
+        .custom-checkbox:checked + label {
+            text-decoration: line-through;
+            opacity: 0.65;
+        }
+        .progress-bar-glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+        .code-scroll::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .code-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-full font-sans antialiased flex flex-col selection:bg-brand-500 selection:text-white">
+
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Hero Status Banner -->
+        <div id="heroCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/50 border border-slate-800 p-6 md:p-8 glow-effect">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-2 text-center md:text-left">
+                    <h2 id="statusTitle" class="text-2xl sm:text-3xl font-extrabold text-white">
+                        ¡Comienza tu negocio online!
+                    </h2>
+                </div>
+
+                <!-- Stats Counter Widget -->
+                <div class="flex items-center gap-4 bg-slate-950/70 p-4 rounded-xl border border-slate-800/80 min-w-[220px] justify-around">
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400 font-medium">Completados</p>
+                        <p id="completedCount" class="text-3xl font-black text-emerald-400">0</p>
+                    </div>
+                    <div class="h-8 w-px bg-slate-800"></div>
+                    <div class="text-center">
+                        <p class="text-xs text-slate-400 font-medium">Pendientes</p>
+                        <p id="pendingCount" class="text-3xl font-black text-amber-400">12</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="relative z-10 mt-6">
+                <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-1.5">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line text-brand-400"></i> Progreso Total de Lanzamiento
+                    </span>
+                    <span id="progressPercentageText" class="text-emerald-400 font-extrabold text-sm">0%</span>
+                </div>
+                <div class="w-full h-3.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+                    <div id="mainProgressBar" class="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-400 rounded-full transition-all duration-500 ease-out progress-bar-glow" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls & Categories Filter -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
+                <button data-filter="all" class="filter-btn active bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-md">
+                    Todos (12)
+                </button>
+                <button data-filter="pending" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-800 transition-all">
+                    Pendientes
+                </button>
+                <button data-filter="completed" class="filter-btn bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-800 transition-all">
+                    Completados
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="shareLinkBtn" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-code text-cyan-400"></i>
+                    <span>Ver Script SQL / Backend</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Task List Grid -->
+        <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Dynamic task items rendered via JS -->
+        </div>
+
+    </main>
+
+    <!-- MySQL Configuration & Backend Code Modal -->
+    <div id="mysqlModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Conexión e Integración con MySQL</h3>
+                        <p class="text-xs text-slate-400">Configura tu API o descarga los scripts SQL / PHP</p>
+                    </div>
+                </div>
+                <button id="closeMysqlModal" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Navigation Tabs -->
+            <div class="flex border-b border-slate-800 bg-slate-900 px-5 gap-4">
+                <button id="tabConfigBtn" class="modal-tab active py-3 text-xs font-bold text-cyan-400 border-b-2 border-cyan-400 transition-all">
+                    1. Configurar Endpoint API
+                </button>
+                <button id="tabSqlBtn" class="modal-tab py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
+                    2. Tabla MySQL (SQL)
+                </button>
+                <button id="tabPhpBtn" class="modal-tab py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
+                    3. Backend PHP Script
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 overflow-y-auto space-y-4 code-scroll flex-1">
+                <!-- Tab 1: Config -->
+                <div id="tabConfig" class="tab-content space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Los navegadores web no se conectan directamente a MySQL por razones de seguridad. Para sincronizar tu checklist con tu base de datos MySQL en tu hosting (cPanel, Hostinger, Vercel, etc.), ingresa la URL de tu endpoint PHP o REST API.
+                    </p>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">URL de tu Endpoint Backend (API PHP / MySQL):</label>
+                        <input type="url" id="apiUrlInput" placeholder="https://tunegocio.com/api/checklist.php" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500 transition-all">
+                    </div>
+                    <div class="flex items-center gap-3 pt-2">
+                        <button id="saveApiBtn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md">
+                            Guardar y Probar Conexión
+                        </button>
+                        <button id="clearApiBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition-all">
+                            Usar Modo Almacenamiento Local
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: SQL -->
+                <div id="tabSql" class="tab-content hidden space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400 font-medium">Ejecuta esta consulta SQL en phpMyAdmin o tu consola MySQL:</span>
+                        <button onclick="copyCode('sqlCodeSnippet')" class="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-semibold">
+                            <i class="fa-regular fa-copy"></i> Copiar SQL
+                        </button>
+                    </div>
+                    <pre class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto code-scroll leading-relaxed" id="sqlCodeSnippet">CREATE TABLE IF NOT EXISTS user_checklist (
+    id VARCHAR(64) NOT NULL,
+    task_id VARCHAR(64) NOT NULL,
+    completed TINYINT(1) NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, task_id)
+);
+
+-- Insertar estado inicial
+INSERT INTO user_checklist (id, task_id, completed) VALUES
+('main_board', 'task-1', 0),
+('main_board', 'task-2', 0),
+('main_board', 'task-3', 0),
+('main_board', 'task-4', 0),
+('main_board', 'task-5', 0),
+('main_board', 'task-6', 0),
+('main_board', 'task-7', 0),
+('main_board', 'task-8', 0),
+('main_board', 'task-9', 0),
+('main_board', 'task-10', 0),
+('main_board', 'task-11', 0),
+('main_board', 'task-12', 0)
+ON DUPLICATE KEY UPDATE completed=VALUES(completed);</pre>
+                </div>
+
+                <!-- Tab 3: PHP Code -->
+                <div id="tabPhp" class="tab-content hidden space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-400 font-medium">Sube este archivo <code class="text-cyan-300">checklist.php</code> a tu servidor web:</span>
+                        <button onclick="copyCode('phpCodeSnippet')" class="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-semibold">
+                            <i class="fa-regular fa-copy"></i> Copiar PHP
+                        </button>
+                    </div>
+                    <pre class="bg-slate-950 border border-slate-800 p-4 rounded-xl text-xs font-mono text-cyan-300 overflow-x-auto code-scroll leading-relaxed" id="phpCodeSnippet">&lt;?php
+// Cabeceras CORS avanzadas para permitir la conexión desde la Web App
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Content-Type: application/json; charset=utf-8');
+
+// Evitar que errores de PHP corrompan la salida JSON
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
+// Responder inmediatamente a peticiones preflight (OPTIONS)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit(0);
+}
+
+// Configuración de tu servidor MySQL en compraloya.online
+$host = 'localhost'; // Cambia si tu servidor MySQL usa otra IP/Host
+$db   = 'ecom_checklist'; // Tu nombre de base de datos
+$user = 'TU_USUARIO_MYSQL'; // Tu usuario de MySQL en cPanel/Hostinger
+$pass = 'TU_CONTRASEÑA_MYSQL'; // Tu contraseña de MySQL
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Error de conexión MySQL: ' . $e->getMessage()]);
+    exit;
+}
+
+// GET: Obtener tareas
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    try {
+        $stmt = $pdo->query("SELECT task_id, completed FROM user_checklist WHERE id = 'main_board'");
+        $rows = $stmt->fetchAll();
+        $tasks = [];
+        foreach ($rows as $row) {
+            $tasks[$row['task_id']] = (bool)$row['completed'];
+        }
+        echo json_encode(['success' => true, 'tasks' => $tasks]);
+    } catch (\PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error en tabla SQL (¿Creaste la tabla?): ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// POST: Guardar tareas
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (isset($input['tasks'])) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO user_checklist (id, task_id, completed) VALUES ('main_board', :task_id, :completed) ON DUPLICATE KEY UPDATE completed = :completed_dup");
+            foreach ($input['tasks'] as $taskId => $isCompleted) {
+                $comp = $isCompleted ? 1 : 0;
+                $stmt->execute(['task_id' => $taskId, 'completed' => $comp, 'completed_dup' => $comp]);
+            }
+            echo json_encode(['success' => true, 'message' => 'Guardado exitosamente en MySQL']);
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Error al guardar en MySQL: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+}
+?&gt;</pre>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950/80 flex justify-end">
+                <button id="closeMysqlModalFooter" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification System -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Reset Modal -->
+    <div id="resetModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="text-center">
+                <h3 class="text-lg font-bold text-white">¿Reiniciar progreso?</h3>
+                <p class="text-slate-400 text-sm mt-1">Esta acción desmarcará todos los pasos del checklist. Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button id="cancelReset" class="flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all">
+                    Cancelar
+                </button>
+                <button id="confirmReset" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-lg shadow-red-600/30">
+                    Sí, reiniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Exact 12 Steps requested by the user
+        const DEFAULT_TASKS = [
+            {
+                id: "task-1",
+                title: "Hacer excel de los productos con precios",
+                category: "Catálogo & Precios",
+                icon: "fa-file-excel",
+                iconBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                description: "Crear una hoja de cálculo estructurada con costos, precios finales, stock y márgenes.",
+                completed: false
+            },
+            {
+                id: "task-2",
+                title: "Carpeta con imágenes",
+                category: "Recursos Visuales",
+                icon: "fa-folder-open",
+                iconBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                description: "Organizar imágenes en alta resolución por códigos de producto en carpetas compartidas.",
+                completed: false
+            },
+            {
+                id: "task-3",
+                title: "Definir nombre",
+                category: "Branding",
+                icon: "fa-signature",
+                iconBg: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+                description: "Seleccionar el nombre comercial de la marca y verificar disponibilidad oficial.",
+                completed: false
+            },
+            {
+                id: "task-4",
+                title: "Descargar videos sin marca de agua",
+                category: "Contenido Multimedia",
+                icon: "fa-video",
+                iconBg: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                description: "Recopilar clips demostrativos limpios de alta calidad para Reels, Shorts y TikTok.",
+                completed: false
+            },
+            {
+                id: "task-5",
+                title: "Hacer imágenes",
+                category: "Diseño & Banners",
+                icon: "fa-paint-brush",
+                iconBg: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                description: "Diseñar banners para la tienda web, portadas de redes sociales y plantillas promocionales.",
+                completed: false
+            },
+            {
+                id: "task-6",
+                title: "Subir productos a ML",
+                category: "Marketplaces",
+                icon: "fa-store",
+                iconBg: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                description: "Publicar el catálogo en Mercado Libre optimizando títulos, descripción y fotos.",
+                completed: false
+            },
+            {
+                id: "task-7",
+                title: "Subir productos a tienda online",
+                category: "Tienda Oficial",
+                icon: "fa-cart-shopping",
+                iconBg: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                description: "Cargar los artículos en la plataforma principal de la tienda con variantes y métodos de pago.",
+                completed: false
+            },
+            {
+                id: "task-8",
+                title: "Comprar dominio en namecheap.com",
+                category: "Dominio & Web",
+                icon: "fa-globe",
+                iconBg: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+                description: "Registrar el nombre de dominio profesional (.com) en Namecheap y enlazarlo a la tienda.",
+                completed: false
+            },
+            {
+                id: "task-9",
+                title: "Crear Tiktok",
+                category: "Redes Sociales",
+                icon: "fa-brands fa-tiktok",
+                iconBg: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+                description: "Configurar cuenta de TikTok Empresa con foto de perfil, descripción y enlace web.",
+                completed: false
+            },
+            {
+                id: "task-10",
+                title: "Crear página de Facebook",
+                category: "Redes Sociales",
+                icon: "fa-brands fa-facebook",
+                iconBg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+                description: "Configurar la Fan Page comercial en Facebook con información oficial y vinculación.",
+                completed: false
+            },
+            {
+                id: "task-11",
+                title: "Crear Instagram",
+                category: "Redes Sociales",
+                icon: "fa-brands fa-instagram",
+                iconBg: "bg-pink-500/10 text-pink-400 border-pink-500/20",
+                description: "Configurar perfil profesional de Instagram y conectar con la cuenta de Facebook.",
+                completed: false
+            },
+            {
+                id: "task-12",
+                title: "Crear canal de Youtube",
+                category: "Redes Sociales",
+                icon: "fa-brands fa-youtube",
+                iconBg: "bg-red-500/10 text-red-400 border-red-500/20",
+                description: "Abrir canal corporativo de YouTube con diseño de portada, foto e información.",
+                completed: false
+            }
+        ];
+
+        let tasksState = {};
+        let currentFilter = 'all';
+        let customApiUrl = localStorage.getItem('ecom_mysql_api_url_v2') || 'checklist.php';
+
+        // Initialize state object
+        DEFAULT_TASKS.forEach(t => tasksState[t.id] = false);
+
+        function loadState() {
+            // Load local storage first
+            const savedLocal = localStorage.getItem('ecom_checklist_state');
+            if (savedLocal) {
+                try {
+                    tasksState = { ...tasksState, ...JSON.parse(savedLocal) };
+                } catch(e){}
+            }
+
+            // If MySQL API is configured, try fetching remote
+            if (customApiUrl) {
+                updateMysqlBadge("Conectando MySQL...", "text-amber-400");
+                fetch(customApiUrl, { method: 'GET' })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP Error ${res.status}`);
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data && data.success && data.tasks) {
+                            tasksState = { ...tasksState, ...data.tasks };
+                            saveToLocalStorage();
+                            updateMysqlBadge("MySQL Conectado", "text-emerald-400");
+                        } else {
+                            const errDesc = data?.error ? data.error : "Error API";
+                            updateMysqlBadge(`MySQL Error (${errDesc})`, "text-rose-400");
+                        }
+                        updateUI();
+                    })
+                    .catch(err => {
+                        console.warn("MySQL API Error:", err);
+                        updateMysqlBadge("MySQL Error Red / CORS", "text-rose-400");
+                        updateUI();
+                    });
+            } else {
+                updateMysqlBadge("Modo Local", "text-cyan-300");
+                updateUI();
+            }
+        }
+
+        function saveState() {
+            saveToLocalStorage();
+
+            // Sync with MySQL backend if URL is provided
+            if (customApiUrl) {
+                updateMysqlBadge("Guardando...", "text-amber-400");
+                fetch(customApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tasks: tasksState })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        updateMysqlBadge("MySQL Conectado", "text-emerald-400");
+                    } else {
+                        updateMysqlBadge("Error Guardando MySQL", "text-rose-400");
+                    }
+                })
+                .catch(() => {
+                    updateMysqlBadge("Error Red MySQL", "text-rose-400");
+                });
+            }
+        }
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('ecom_checklist_state', JSON.stringify(tasksState));
+            } catch(e){}
+        }
+
+        function updateMysqlBadge(text, colorClass) {
+            const badge = document.getElementById('mysqlStatusText');
+            if (badge) {
+                badge.textContent = text;
+                badge.className = colorClass;
+            }
+        }
+
+        function renderTasks() {
+            const tasksList = document.getElementById('tasksList');
+            if (!tasksList) return;
+
+            tasksList.innerHTML = '';
+
+            const filteredTasks = DEFAULT_TASKS.filter(task => {
+                const isCompleted = !!tasksState[task.id];
+                if (currentFilter === 'pending') return !isCompleted;
+                if (currentFilter === 'completed') return isCompleted;
+                return true;
+            });
+
+            if (filteredTasks.length === 0) {
+                tasksList.innerHTML = `
+                    <div class="col-span-1 md:col-span-2 py-12 text-center bg-slate-900/40 rounded-2xl border border-slate-800/80">
+                        <i class="fa-solid fa-clipboard-check text-4xl text-slate-600 mb-3"></i>
+                        <p class="text-slate-400 text-sm font-medium">No hay tareas en esta categoría.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const isChecked = !!tasksState[task.id];
+
+                const card = document.createElement('div');
+                card.className = `group relative rounded-2xl p-5 border transition-all duration-300 flex flex-col justify-between ${
+                    isChecked 
+                    ? 'bg-emerald-950/20 border-emerald-500/30 glow-success' 
+                    : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 hover:bg-slate-900'
+                }`;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${task.iconBg}">
+                                <i class="fa-solid ${task.icon}"></i>
+                                ${task.category}
+                            </span>
+                            <span class="text-xs font-bold ${isChecked ? 'text-emerald-400' : 'text-slate-500'}">
+                                ${isChecked ? '¡Listo!' : 'Pendiente'}
+                            </span>
+                        </div>
+
+                        <div class="flex items-start gap-3 mt-1">
+                            <div class="pt-0.5">
+                                <input 
+                                    type="checkbox" 
+                                    id="${task.id}" 
+                                    class="custom-checkbox w-5 h-5 rounded-md text-brand-600 bg-slate-800 border-slate-700 focus:ring-brand-500 focus:ring-offset-slate-900 cursor-pointer transition-all"
+                                    ${isChecked ? 'checked' : ''}
+                                >
+                            </div>
+                            <label for="${task.id}" class="cursor-pointer text-base font-bold text-slate-100 group-hover:text-brand-300 transition-colors">
+                                ${task.title}
+                            </label>
+                        </div>
+
+                        <p class="text-xs text-slate-400 mt-2 pl-8 leading-relaxed">
+                            ${task.description}
+                        </p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>Paso ${DEFAULT_TASKS.findIndex(t => t.id === task.id) + 1} de 12</span>
+                        <button class="toggle-task-btn text-brand-400 font-semibold hover:underline" data-id="${task.id}">
+                            ${isChecked ? 'Desmarcar' : 'Marcar completado'}
+                        </button>
+                    </div>
+                `;
+
+                // Handlers
+                const checkbox = card.querySelector(`#${task.id}`);
+                const toggleBtn = card.querySelector('.toggle-task-btn');
+
+                const handleToggle = () => {
+                    const newValue = !tasksState[task.id];
+                    tasksState[task.id] = newValue;
+                    saveState();
+                    updateUI();
+
+                    if (newValue) {
+                        showToast(`¡Paso completado: "${task.title}"! 🎉`, "success");
+                        checkFullCompletion();
+                    }
+                };
+
+                checkbox.addEventListener('change', handleToggle);
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleToggle();
+                });
+
+                tasksList.appendChild(card);
+            });
+        }
+
+        function updateUI() {
+            const completedCount = Object.values(tasksState).filter(Boolean).length;
+            const totalCount = DEFAULT_TASKS.length;
+            const percentage = Math.round((completedCount / totalCount) * 100);
+
+            // Update Counts and percentage text
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('pendingCount').textContent = totalCount - completedCount;
+            document.getElementById('progressPercentageText').textContent = `${percentage}%`;
+            document.getElementById('mainProgressBar').style.width = `${percentage}%`;
+
+            // Update Hero Banner content based on total progress percentage
+            const statusTitle = document.getElementById('statusTitle');
+
+            if (percentage === 0) {
+                statusTitle.textContent = "¡Comienza tu negocio online!";
+            } else if (percentage < 35) {
+                statusTitle.textContent = "¡Buen arranque!";
+            } else if (percentage < 70) {
+                statusTitle.textContent = "¡A más de la mitad!";
+            } else if (percentage < 100) {
+                statusTitle.textContent = "¡Casi listo para vender!";
+            } else {
+                statusTitle.textContent = "🎉 ¡Felicidades, tienda lista!";
+            }
+
+            renderTasks();
+        }
+
+        function checkFullCompletion() {
+            const completedCount = Object.values(tasksState).filter(Boolean).length;
+            if (completedCount === DEFAULT_TASKS.length) {
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 130, spread: 90, origin: { y: 0.6 } });
+                }
+                showToast("🚀 ¡Increíble! Has alcanzado el 100% del checklist.", "success");
+            }
+        }
+
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-xs font-semibold transform transition-all duration-300 translate-y-5 opacity-0 ${
+                type === 'success' 
+                ? 'bg-slate-900 border-emerald-500/50 text-emerald-300' 
+                : 'bg-slate-900 border-brand-500/50 text-brand-300'
+            }`;
+
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-brand-400'} text-base"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-5', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function copyCode(elementId) {
+            const text = document.getElementById(elementId)?.innerText;
+            if (text) {
+                const input = document.createElement('textarea');
+                input.value = text;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast("¡Código copiado al portapapeles!", "success");
+            }
+        }
+
+        // Filtering logic setup
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('bg-brand-600', 'text-white', 'shadow-md');
+                    b.classList.add('bg-slate-900', 'text-slate-400', 'border', 'border-slate-800');
+                });
+
+                btn.classList.remove('bg-slate-900', 'text-slate-400', 'border', 'border-slate-800');
+                btn.classList.add('bg-brand-600', 'text-white', 'shadow-md');
+
+                currentFilter = btn.dataset.filter;
+                renderTasks();
+            });
+        });
+
+        // MySQL Modal Toggle & Config handlers
+        const mysqlModal = document.getElementById('mysqlModal');
+        const mysqlConfigBtn = document.getElementById('mysqlConfigBtn');
+        const shareLinkBtn = document.getElementById('shareLinkBtn');
+        const closeMysqlModal = document.getElementById('closeMysqlModal');
+        const closeMysqlModalFooter = document.getElementById('closeMysqlModalFooter');
+
+        const openModal = () => mysqlModal?.classList.remove('hidden');
+        const closeModal = () => mysqlModal?.classList.add('hidden');
+
+        mysqlConfigBtn?.addEventListener('click', openModal);
+        shareLinkBtn?.addEventListener('click', () => {
+            openModal();
+            switchTab('tabSqlBtn', 'tabSql');
+        });
+        closeMysqlModal?.addEventListener('click', closeModal);
+        closeMysqlModalFooter?.addEventListener('click', closeModal);
+
+        // Tab Switching inside Modal
+        function switchTab(btnId, tabId) {
+            document.querySelectorAll('.modal-tab').forEach(b => {
+                b.classList.remove('text-cyan-400', 'border-cyan-400', 'active');
+                b.classList.add('text-slate-400', 'border-transparent');
+            });
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+
+            const activeBtn = document.getElementById(btnId);
+            const activeTab = document.getElementById(tabId);
+
+            activeBtn?.classList.add('text-cyan-400', 'border-cyan-400', 'active');
+            activeBtn?.classList.remove('text-slate-400', 'border-transparent');
+            activeTab?.classList.remove('hidden');
+        }
+
+        document.getElementById('tabConfigBtn')?.addEventListener('click', () => switchTab('tabConfigBtn', 'tabConfig'));
+        document.getElementById('tabSqlBtn')?.addEventListener('click', () => switchTab('tabSqlBtn', 'tabSql'));
+        document.getElementById('tabPhpBtn')?.addEventListener('click', () => switchTab('tabPhpBtn', 'tabPhp'));
+
+        // API Endpoint saving
+        const apiUrlInput = document.getElementById('apiUrlInput');
+        if (apiUrlInput) apiUrlInput.value = customApiUrl;
+
+        document.getElementById('saveApiBtn')?.addEventListener('click', () => {
+            const url = apiUrlInput.value.trim();
+            customApiUrl = url;
+            localStorage.setItem('ecom_mysql_api_url_v2', url);
+            showToast("Configuración guardada. Conectando...", "info");
+            loadState();
+            closeModal();
+        });
+
+        document.getElementById('clearApiBtn')?.addEventListener('click', () => {
+            customApiUrl = '';
+            localStorage.removeItem('ecom_mysql_api_url_v2');
+            localStorage.removeItem('ecom_mysql_api_url');
+            if (apiUrlInput) apiUrlInput.value = '';
+            showToast("Cambiado a Modo Almacenamiento Local", "info");
+            updateMysqlBadge("Modo Local", "text-cyan-300");
+            closeModal();
+        });
+
+        // Reset Flow with Modal
+        const resetModal = document.getElementById('resetModal');
+        document.getElementById('resetBtn')?.addEventListener('click', () => {
+            resetModal?.classList.remove('hidden');
+        });
+
+        document.getElementById('cancelReset')?.addEventListener('click', () => {
+            resetModal?.classList.add('hidden');
+        });
+
+        document.getElementById('confirmReset')?.addEventListener('click', () => {
+            DEFAULT_TASKS.forEach(t => tasksState[t.id] = false);
+            saveState();
+            updateUI();
+            resetModal?.classList.add('hidden');
+            showToast("El checklist ha sido reiniciado.", "info");
+        });
+
+        // Initialize App on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+        });
+    </script>
+</body>
+</html>
